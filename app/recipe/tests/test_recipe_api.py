@@ -22,6 +22,11 @@ def sample_recipe(**params):
     return Recipe.objects.create(**defaults)
 
 
+def detail_url(recipe_id):
+    """Return recipe detail url"""
+    return reverse('recipe:recipe-detail', args=[recipe_id])
+
+
 class RecipeApiTests(TestCase):
 
     def setUp(self):
@@ -42,3 +47,14 @@ class RecipeApiTests(TestCase):
         self.assertEqual(
             res.data[0].get('name'), serializer.data[0].get('name')
             )
+
+    def test_retrieve_single_recipe(self):
+        """Test retrieving a single recipe"""
+        recipe = sample_recipe()
+        url = detail_url(recipe.id)
+
+        res = self.client.get(url)
+        serializer = RecipeSerializer(recipe, many=False)
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(serializer.data, res.data)
