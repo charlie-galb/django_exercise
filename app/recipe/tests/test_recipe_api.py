@@ -4,7 +4,7 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Recipe
+from core.models import Recipe, Ingredient
 from recipe.serializers import RecipeSerializer
 
 
@@ -15,10 +15,9 @@ def sample_recipe(**params):
     """Create and return a sample recipe"""
     defaults = {
         'name': 'Some dish',
-        'description': 'A relevant description'
+        'description': 'A relevant description',
     }
     defaults.update(params)
-
     return Recipe.objects.create(**defaults)
 
 
@@ -60,14 +59,25 @@ class RecipeApiTests(TestCase):
         """Test creating a recipe"""
         payload = {
             'name': 'Thai green curry',
-            'description': 'Cook peppers and tofu in coconut milk and serve.'
+            'description': 'Cook peppers and tofu in coconut milk and serve.',
+            'ingredients': [
+                {'name': 'Peppers'},
+                {'name': 'Coconut milk'}
+            ]
         }
 
-        res = self.client.post(RECIPES_URL, payload)
+        res = self.client.post(RECIPES_URL, payload, format='json')
 
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         recipe = Recipe.objects.get(id=res.data['id'])
         self.assertEqual(recipe.name, payload.get('name'))
+        ingredients = Ingredient.objects.filter(recipe=res.data['id'])
+        self.assertEqual(
+            ingredients[0].name, payload.get('ingredients')[1].get('name')
+            )
+        self.assertEqual(
+            ingredients[1].name, payload.get('ingredients')[0].get('name')
+            )
 
     def test_delete_recipe(self):
         """Test deleting a recipe"""
@@ -84,7 +94,7 @@ class RecipeApiTests(TestCase):
         self.assertNotIn(recipe, recipes)
 
     def test_update_recipe_name(self):
-        """test updating a recipe"""
+        """test updating a recipe's name"""
         recipe = sample_recipe()
         url = detail_url(recipe.id)
         payload = {'name': 'Updated sample recipe'}
