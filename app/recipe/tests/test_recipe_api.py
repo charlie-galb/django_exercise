@@ -58,3 +58,14 @@ class RecipeApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(serializer.data, res.data)
+
+    def test_create_recipe(self):
+        """Test creating a recipe"""
+        payload = {
+            'name': 'Thai green curry',
+            'description': 'Cook peppers and tofu in coconut milk and serve.'
+        }
+        res = self.client.post(RECIPES_URL, payload)
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        recipe = Recipe.objects.get(id=res.data['id'])
+        self.assertEqual(recipe.name, payload.get('name'))
