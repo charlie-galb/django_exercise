@@ -19,7 +19,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'description', 'ingredients')
-        read_only_fields = ('id',)
 
     def create(self, validated_data):
         ingredient_validated_data = validated_data.pop('ingredients')
@@ -29,3 +28,18 @@ class RecipeSerializer(serializers.ModelSerializer):
             each['recipe'] = recipe
         ingredients_serializer.create(ingredient_validated_data)
         return recipe
+
+    def update(self, instance, validated_data):
+        ingredient_data = validated_data.pop('ingredients', None)
+        instance.name = validated_data.get('name', instance.name)
+        instance.description = validated_data.get(
+            'description', instance.description
+            )
+        instance.save()
+        if ingredient_data:
+            ingredients_serializer = self.fields['ingredients']
+            Ingredient.objects.filter(recipe=instance).delete()
+            for each in ingredient_data:
+                each['recipe'] = instance
+            ingredients_serializer.create(ingredient_data)
+        return instance

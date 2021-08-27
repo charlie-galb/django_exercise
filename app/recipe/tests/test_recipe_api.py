@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from core.models import Recipe, Ingredient
-from recipe.serializers import RecipeSerializer
+from recipe.serializers import RecipeSerializer, IngredientSerializer
 
 
 RECIPES_URL = reverse('recipe:recipe-list')
@@ -35,7 +35,9 @@ class RecipeApiTests(TestCase):
         """Test retrieving a list of recipes"""
         sample_recipe()
         sample_recipe()
+
         res = self.client.get(RECIPES_URL)
+        
         recipes = Recipe.objects.all().order_by('-id')
         serializer = RecipeSerializer(recipes, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
@@ -99,6 +101,32 @@ class RecipeApiTests(TestCase):
         url = detail_url(recipe.id)
         payload = {'name': 'Updated sample recipe'}
 
-        res = self.client.patch(url, payload)
+        res = self.client.patch(url, payload, format='json')
 
         self.assertEqual(res.data['name'], payload.get('name'))
+
+    def test_update_recipe_ingredients(self):
+        """test updating a recipe's ingredients"""
+        recipe = sample_recipe()
+        url = detail_url(recipe.id)
+        old_ingredient = Ingredient.objects.create(
+            name='Ingredient1', recipe=recipe
+            )
+        new_ingredient1 = {'name': 'First updated ingredient'}
+        new_ingredient2 = {'name': 'Second updated ingredient'}
+        payload = {
+            'ingredients': [
+                new_ingredient1,
+                new_ingredient2,
+            ]
+        }
+
+        res = self.client.patch(url, payload, format='json')
+
+        ingredients = Ingredient.objects.all().filter(recipe=recipe)
+        serializer = IngredientSerializer(ingredients, many=True)
+        self.assertEqual(len(res.data.get('ingredients')), 2)
+        self.assertEqual(res.data['name'], recipe.name)
+        self.assertIn(new_ingredient1, serializer.data)
+        self.assertIn(new_ingredient2, serializer.data)
+        self.assertNotIn(old_ingredient, serializer.data)
