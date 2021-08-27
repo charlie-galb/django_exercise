@@ -37,7 +37,7 @@ class RecipeApiTests(TestCase):
         sample_recipe()
 
         res = self.client.get(RECIPES_URL)
-        
+
         recipes = Recipe.objects.all().order_by('-id')
         serializer = RecipeSerializer(recipes, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
