@@ -69,3 +69,18 @@ class RecipeApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         recipe = Recipe.objects.get(id=res.data['id'])
         self.assertEqual(recipe.name, payload.get('name'))
+
+    def test_delete_recipe(self):
+        """Test deleting a recipe"""
+        recipe = sample_recipe(
+            name='Cheese sandwich',
+            description='Place cheese between two slices of bread.'
+            )
+        url = detail_url(recipe.id)
+
+        res = self.client.delete(url)
+
+        recipes = Recipe.objects.all()
+
+        self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertNotIn(recipe, recipes)
