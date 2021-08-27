@@ -36,12 +36,9 @@ class RecipeApiTests(TestCase):
         """Test retrieving a list of recipes"""
         sample_recipe()
         sample_recipe()
-
         res = self.client.get(RECIPES_URL)
-
         recipes = Recipe.objects.all().order_by('-id')
         serializer = RecipeSerializer(recipes, many=True)
-
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 2)
         self.assertEqual(
@@ -54,8 +51,8 @@ class RecipeApiTests(TestCase):
         url = detail_url(recipe.id)
 
         res = self.client.get(url)
-        serializer = RecipeSerializer(recipe, many=False)
 
+        serializer = RecipeSerializer(recipe, many=False)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(serializer.data, res.data)
 
@@ -65,7 +62,9 @@ class RecipeApiTests(TestCase):
             'name': 'Thai green curry',
             'description': 'Cook peppers and tofu in coconut milk and serve.'
         }
+
         res = self.client.post(RECIPES_URL, payload)
+
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         recipe = Recipe.objects.get(id=res.data['id'])
         self.assertEqual(recipe.name, payload.get('name'))
@@ -81,6 +80,15 @@ class RecipeApiTests(TestCase):
         res = self.client.delete(url)
 
         recipes = Recipe.objects.all()
-
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
         self.assertNotIn(recipe, recipes)
+
+    def test_update_recipe_name(self):
+        """test updating a recipe"""
+        recipe = sample_recipe()
+        url = detail_url(recipe.id)
+        payload = {'name': 'Updated sample recipe'}
+
+        res = self.client.patch(url, payload)
+
+        self.assertEqual(res.data['name'], payload.get('name'))
