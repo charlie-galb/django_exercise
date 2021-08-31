@@ -8,7 +8,3 @@ class RecipeViewSet(viewsets.ModelViewSet):
     """Manage recipes in the database"""
     serializer_class = RecipeSerializer
     queryset = Recipe.objects.all()
-
-    def get_queryset(self):
-        """Retrieve all recipes"""
-        return self.queryset
