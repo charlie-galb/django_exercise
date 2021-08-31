@@ -86,9 +86,8 @@ class RecipeApiTests(TestCase):
 
         res = self.client.delete(url)
 
-        recipes = Recipe.objects.all()
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertNotIn(recipe, recipes)
+        self.assertFalse(Recipe.objects.filter(pk=recipe.id).exists())
 
     def test_update_recipe_name(self):
         """test updating a recipe's name"""
