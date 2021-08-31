@@ -23,10 +23,9 @@ class RecipeSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         ingredient_validated_data = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(**validated_data)
-        ingredients_serializer = self.fields['ingredients']
-        for each in ingredient_validated_data:
-            each['recipe'] = recipe
-        ingredients_serializer.create(ingredient_validated_data)
+        for ingredient in ingredient_validated_data:
+            ingredient['recipe'] = recipe
+            Ingredient.objects.create(**ingredient)
         return recipe
 
     def update(self, instance, validated_data):
@@ -37,9 +36,8 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
         instance.save()
         if ingredient_data:
-            ingredients_serializer = self.fields['ingredients']
             Ingredient.objects.filter(recipe=instance).delete()
-            for each in ingredient_data:
-                each['recipe'] = instance
-            ingredients_serializer.create(ingredient_data)
+            for ingredient in ingredient_data:
+                ingredient['recipe'] = instance
+                Ingredient.objects.create(**ingredient)
         return instance
