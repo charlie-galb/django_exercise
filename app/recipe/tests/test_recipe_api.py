@@ -5,7 +5,6 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from core.models import Recipe, Ingredient
-from recipe.serializers import RecipeSerializer, IngredientSerializer
 
 
 RECIPES_URL = reverse('recipe:recipe-list')
@@ -33,18 +32,15 @@ class RecipeApiTests(TestCase):
 
     def test_retrieve_recipes(self):
         """Test retrieving a list of recipes"""
-        sample_recipe()
-        sample_recipe()
+        recipe1 = sample_recipe(name='Hot dog')
+        recipe2 = sample_recipe(name='Burger')
 
         res = self.client.get(RECIPES_URL)
 
-        recipes = Recipe.objects.all().order_by('-id')
-        serializer = RecipeSerializer(recipes, many=True)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(len(res.data), 2)
-        self.assertEqual(
-            res.data[0].get('name'), serializer.data[0].get('name')
-            )
+        self.assertEqual(res.data[0].get('name'), recipe1.name)
+        self.assertEqual(res.data[1].get('name'), recipe2.name)
 
     def test_retrieve_single_recipe(self):
         """Test retrieving a single recipe"""
@@ -53,9 +49,8 @@ class RecipeApiTests(TestCase):
 
         res = self.client.get(url)
 
-        serializer = RecipeSerializer(recipe, many=False)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(serializer.data, res.data)
+        self.assertEqual(recipe.name, res.data.get('name'))
 
     def test_create_recipe(self):
         """Test creating a recipe"""
@@ -109,7 +104,7 @@ class RecipeApiTests(TestCase):
         """test updating a recipe's ingredients"""
         recipe = sample_recipe()
         url = detail_url(recipe.id)
-        old_ingredient = Ingredient.objects.create(
+        Ingredient.objects.create(
             name='Ingredient1', recipe=recipe
             )
         new_ingredient1 = {'name': 'First updated ingredient'}
@@ -123,10 +118,13 @@ class RecipeApiTests(TestCase):
 
         res = self.client.patch(url, payload, format='json')
 
-        ingredients = Ingredient.objects.all().filter(recipe=recipe)
-        serializer = IngredientSerializer(ingredients, many=True)
         self.assertEqual(len(res.data.get('ingredients')), 2)
         self.assertEqual(res.data['name'], recipe.name)
-        self.assertIn(new_ingredient1, serializer.data)
-        self.assertIn(new_ingredient2, serializer.data)
-        self.assertNotIn(old_ingredient, serializer.data)
+        self.assertIn(
+            new_ingredient1['name'],
+            res.data['ingredients'][1].get('name')
+            )
+        self.assertIn(
+            new_ingredient2['name'],
+            res.data['ingredients'][0].get('name')
+            )
