@@ -68,12 +68,14 @@ class RecipeApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         recipe = Recipe.objects.get(id=res.data['id'])
         self.assertEqual(recipe.name, payload.get('name'))
-        ingredients = Ingredient.objects.filter(recipe=res.data['id'])
+        ingredient_names = Ingredient.objects.filter(
+            recipe=res.data['id']
+            ).values_list("name", flat=True)
         self.assertEqual(
-            ingredients[0].name, payload.get('ingredients')[1].get('name')
+            ingredient_names[0], payload.get('ingredients')[1].get('name')
             )
         self.assertEqual(
-            ingredients[1].name, payload.get('ingredients')[0].get('name')
+            ingredient_names[1], payload.get('ingredients')[0].get('name')
             )
 
     def test_delete_recipe(self):
